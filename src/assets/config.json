@@ -1,0 +1,6 @@
+{
+  "transport": "skyway",
+  "backend": {
+    "url": "https://gale-udonarium-axe-backend-vercel.vercel.app"
+  }
+}
