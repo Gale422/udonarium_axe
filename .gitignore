@@ -62,3 +62,5 @@ plan-*.md
 
 # The check images of texture generation, made to be looked at
 /scripts/texture-gen/check/
+
+*.local.spec.ts

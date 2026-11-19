@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { join } from 'node:path/posix';
 
 import { IMPORT_STATEMENTS, loadedBy } from '@axe/testing/module-imports';
 
