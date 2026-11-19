@@ -87,7 +87,7 @@ describe('PieceResourceChanges', () => {
   });
 
   it('floats a change this end made over the piece, with the flash of a hit or of a heal', () => {
-    const { character, resource } = pieceWith('本体');
+    const { character, resource } = pieceWith('本体', { [DataElementAttribute.CHANGE_EFFECT]: 'true' });
     const { changes, move } = setup(character);
 
     move(resource, 7);
@@ -100,7 +100,7 @@ describe('PieceResourceChanges', () => {
   });
 
   it('draws nothing for a value replaced by a load or a sync', () => {
-    const { character, resource } = pieceWith('本体');
+    const { character, resource } = pieceWith('本体', { [DataElementAttribute.CHANGE_EFFECT]: 'true' });
     const { changes, move } = setup(character);
 
     move(resource, 2, false);
@@ -111,7 +111,9 @@ describe('PieceResourceChanges', () => {
 
   it('shows a change to a part on the body, under the name of the part', () => {
     const { character } = pieceWith('本体');
-    const { character: part, resource: partResource } = pieceWith('腕');
+    const { character: part, resource: partResource } = pieceWith('腕', {
+      [DataElementAttribute.CHANGE_EFFECT]: 'true',
+    });
     const { changes, move } = setup(character, [part]);
 
     move(partResource, 5);
@@ -152,7 +154,7 @@ describe('PieceResourceChanges', () => {
       delta: 2,
       label: '+2',
       ratio: 0.2,
-      playsEffect: false,
+      playsEffect: true,
       playsSound: false,
       soundSet: 'flesh',
     };
@@ -171,7 +173,7 @@ describe('PieceResourceChanges', () => {
 
   it('keeps the six newest changes, and takes each away a little after it was drawn', () => {
     vi.useFakeTimers();
-    const { character, resource } = pieceWith('本体');
+    const { character, resource } = pieceWith('本体', { [DataElementAttribute.CHANGE_EFFECT]: 'true' });
     const { changes, move } = setup(character);
 
     for (let value = 9; value >= 3; value--) move(resource, value);

@@ -177,7 +177,8 @@ export class PieceResourceChanges {
       label: change.part ? `${this.host.partNameOf(change.part)} ${change.label}` : change.label,
       key: ++this.floatingKey,
     }));
-    this.floating.update((current) => [...current, ...entries].slice(-FLOATING_CHANGE_LIMIT));
+    const shown = entries.filter((entry) => entry.playsEffect);
+    this.floating.update((current) => [...current, ...shown].slice(-FLOATING_CHANGE_LIMIT));
 
     const kind = entries.some((entry) => entry.kind === 'damage') ? 'damage' : 'heal';
     this.hitFlash.show(kind, kind === 'damage' ? HIT_FLASH_MS : HEAL_AURA_MS);
@@ -188,7 +189,6 @@ export class PieceResourceChanges {
       SoundEffect.playLocal(resourceChangeSound(loudest.kind, loudest.ratio, loudest.soundSet), VolumeType.EFFECT);
     }
 
-    const shown = entries.filter((entry) => entry.playsEffect);
     const char = this.host.character();
     if (char && shown.length > 0) this.host.playEffects(char, shown);
 

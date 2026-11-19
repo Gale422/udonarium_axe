@@ -73,3 +73,24 @@
 - 目的: 本物のキャラクターのデータを読む手元だけのテスト（`*.local.spec.ts`）を記録に入れない。手元だけの除外の設定（`.git/info/exclude`）は記録に残らず、取り違えて記録に入れるおそれがあるので、記録に残る `.gitignore` にした
 - 確かめ方: `git status` に、手元だけのテストのファイルが出ないこと
 - フォーク元が変えたときの直し方: フォーク元が `.gitignore` の終わりに行を足したら、両方を残す
+
+## piece-resource-changes.ts への変更
+
+- ファイル: `src/app/features/character/game-character/piece-resource-changes.ts`（リソースの増減で、コマの上に出す演出）
+- 変更: `show()` で、見せる変化（`shown`）を選ぶ行を前に上げ、増減量の数字を積む行（`this.floating.update`）に、`entries` の代わりに `shown` を渡した
+- 目的: 「増減でエフェクト」の入っていない項目の増減では、増減量の数字を出さない（`resource-change-effect/spec.md`）
+- 確かめ方: 同じフォルダの、自分用の `resource-change-effect-setting.spec.ts` と、フォーク元の `piece-resource-changes.spec.ts`、`game-character.component.spec.ts` が通ること
+- フォーク元が変えたときの直し方
+  - `show()` が書き換わったら、増減量の数字に、`playsEffect` の入った変化だけを渡す形に入れ直す
+  - フォーク元が、数字を出すかどうかの設定を足したら、自分の変更をやめて、その設定に合わせられないかを先に考える
+  - 新しいコマの HP と MP に「増減でエフェクト」を入れる既定（`src/app/domain/character/character-template-factory.ts`）がなくなると、ぶつからずに、`game-character.component.spec.ts` と `e2e/character-gauge.spec.ts` の、数字を確かめるテストが落ちる。そのテストの項目に「増減でエフェクト」を入れる
+
+## piece-resource-changes.spec.ts への変更
+
+- ファイル: `src/app/features/character/game-character/piece-resource-changes.spec.ts`（フォーク元のテスト）
+- 変更: 増減量の数字を確かめる 5 つのテストで、確かめる中身は変えず、数字の出る項目を使うようにした
+  - 項目を動かす 4 つ: `pieceWith` に `{ [DataElementAttribute.CHANGE_EFFECT]: 'true' }` を渡した
+  - 届く変化を使う 1 つ: `playsEffect` を `true` にした
+- 目的: 数字の出ない項目のままだと、数字が出ないことを確かめるテストが、確かめたい見分け（読み込みや同期で変わった値）が壊れても通ってしまうため
+- 確かめ方: このファイルのテストが全部通ること
+- フォーク元が変えたときの直し方: このファイルのテストが書き換わったり足されたりしたら、数字を確かめるテストの、動かす項目か届く変化に「増減でエフェクト」を入れる
