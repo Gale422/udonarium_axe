@@ -7,6 +7,11 @@ import {
   ImportedSkillTable,
   ImportedStatus,
 } from '@axe/domain/character/import/imported-character';
+import {
+  createImportedResourceElement,
+  withImportedFieldSettings,
+  withImportedGroupSettings,
+} from '@axe/domain/character/import/imported-field-attributes';
 import { ChatPalette } from '@axe/domain/chat/chat-palette';
 import { DEFAULT_CHAT_COLOR_CODES } from '@axe/domain/chat/constants';
 import {
@@ -158,6 +163,7 @@ export class ImportedCharacterFactory {
         const groupElement = DataElement.create(group.label, '', {
           [DataElementAttribute.ROLE]: DataElementRole.GROUP,
         });
+        withImportedGroupSettings(groupElement, group.settings);
         sectionElement.appendChild(groupElement);
         for (const field of group.fields) {
           groupElement.appendChild(ImportedCharacterFactory.createImportedField(field));
@@ -188,6 +194,7 @@ export class ImportedCharacterFactory {
   }
 
   private static createImportedField(field: ImportedField): DataElement {
+    if (field.resource) return createImportedResourceElement(field, field.resource);
     const attributes: Record<string, string | number> = {
       [DataElementAttribute.ROLE]: DataElementRole.FIELD,
     };
@@ -199,7 +206,7 @@ export class ImportedCharacterFactory {
     } else {
       attributes[DataElementAttribute.FIELD_TYPE] = DataElementFieldType.TEXT;
     }
-    return DataElement.create(field.label, field.value, attributes);
+    return withImportedFieldSettings(DataElement.create(field.label, field.value, attributes), field.settings);
   }
 
   private static appendChatPalette(character: GameCharacter, imported: ImportedCharacter): void {

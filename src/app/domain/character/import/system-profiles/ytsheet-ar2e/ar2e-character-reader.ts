@@ -1,0 +1,391 @@
+/**
+ * 読み手。
+ *
+ * ゆとシートの記録を、ルールの言葉のアリアンロッド2E のキャラクターに読み替える。
+ * 版の違いの補い、手の見分け、取得元の言葉、ダイス数の補いもここで行う。
+ * 欄の並べ方と、アックスの書き方は持たない。
+ */
+import { normalizeHexColor } from '@axe/domain/character/import/imported-character';
+import {
+  AR2E_ABILITIES,
+  AR2E_CHECKS,
+  AR2E_NONE_MARKS,
+  AR2E_SPECIAL_CHECKS,
+  Ar2eAbilityId,
+  Ar2eCheckId,
+} from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-catalog';
+import {
+  Ar2eAbilityScore,
+  Ar2eBattle,
+  Ar2eCharacter,
+  Ar2eCheckScore,
+  Ar2eConnection,
+  Ar2eGeis,
+  Ar2eHand,
+  Ar2eHandedness,
+  Ar2eProfile,
+  Ar2eSkill,
+} from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-character';
+import { YtsheetRecord } from '@axe/domain/character/import/ytsheet-record';
+import { readYtsheetText } from '@axe/domain/character/import/ytsheet-text';
+
+/** 能力値と、ゆとシートの項目名に入る記号 */
+const ABILITY_KEYS: Readonly<Record<Ar2eAbilityId, string>> = {
+  str: 'Str',
+  dex: 'Dex',
+  agi: 'Agi',
+  int: 'Int',
+  sen: 'Sen',
+  mnd: 'Mnd',
+  luk: 'Luk',
+};
+
+/** 判定と、ゆとシートの項目名に入る記号。能力値の判定は、能力値の記号 */
+const CHECK_KEYS: Readonly<Record<Ar2eCheckId, string>> = {
+  ...ABILITY_KEYS,
+  trapDetect: 'TrapDetect',
+  trapRelease: 'TrapRelease',
+  dangerDetect: 'DangerDetect',
+  enemyLore: 'EnemyLore',
+  appraisal: 'Appraisal',
+  magic: 'Magic',
+  song: 'Song',
+  alchemy: 'Alchemy',
+};
+
+/** 右手と左手の合計の仕方の記号 */
+const HANDEDNESS_CODES: ReadonlyMap<number, Ar2eHandedness> = new Map<number, Ar2eHandedness>([
+  [1, 'separate'],
+  [2, 'both'],
+  [3, 'accuracyOnly'],
+  [4, 'all'],
+]);
+
+/** 合計の仕方がないときの合計の仕方。ゆとシートの閲覧画面も「合計しない」として表示する */
+const HANDEDNESS_WHEN_UNSET: Ar2eHandedness = 'separate';
+
+/** 右手と左手の値がない古いシートの合計の仕方。手ごとの値がないので、合計の値で振るしかない */
+const HANDEDNESS_WITHOUT_HAND_VALUES: Ar2eHandedness = 'both';
+
+/** スキルの取得元の記号と、ゆとシートの閲覧画面の言葉（`power` は別に扱う） */
+const SKILL_SOURCE_WORDS: ReadonlyMap<string, string> = new Map([
+  ['general', '一般'],
+  ['race', '種族'],
+  ['style', '流派'],
+  ['faith', '天恵'],
+  ['geis', '誓約'],
+  ['add', '他スキル'],
+  ['another', '異才'],
+]);
+
+/**
+ * 手の名前と種別が、何も書かれていないかを見る。
+ *
+ * @param text 手の名前か種別
+ * @returns 空か「なし」の書き方なら true
+ */
+const isBlank = (text: string): boolean => text === '' || AR2E_NONE_MARKS.has(text);
+
+/** 盾の種別 */
+const SHIELD_TYPE = '盾';
+
+/**
+ * ゆとシートの記録を、アリアンロッド2E のキャラクターに読み替える。
+ *
+ * @param record ゆとシートの記録
+ * @returns アリアンロッド2E のキャラクター
+ */
+export function readAr2eCharacter(record: YtsheetRecord): Ar2eCharacter {
+  return {
+    name: nameOfPiece(record),
+    color: normalizeHexColor(lineText(record, 'nameColor').split(',')[0]),
+    resources: {
+      hp: record.number('hpTotal'),
+      mp: record.number('mpTotal'),
+      fate: record.number('fateTotal'),
+      fateLimit: record.number('fateLimit'),
+    },
+    abilities: abilitiesOf(record),
+    checks: checksOf(record),
+    battle: battleOf(record),
+    hands: { right: handOf(record, 'HandR'), left: handOf(record, 'HandL') },
+    handedness: handednessOf(record),
+    skills: skillsOf(record),
+    geises: geisesOf(record),
+    connections: connectionsOf(record),
+    belongings: { money: record.number('moneyTotal'), items: multilineText(record, 'items') },
+    profile: profileOf(record),
+  };
+}
+
+/**
+ * 項目の値を、1 行の欄の文字として読む。
+ *
+ * @param record ゆとシートの記録
+ * @param key 項目名
+ * @returns 画面に表示されるとおりの文字（前後の空白を除く）
+ */
+function lineText(record: YtsheetRecord, key: string): string {
+  return readYtsheetText(record.text(key), 'line');
+}
+
+/**
+ * 項目の値を、複数行の欄の文字として読む。
+ *
+ * @param record ゆとシートの記録
+ * @param key 項目名
+ * @returns 画面に表示されるとおりの文字
+ */
+function multilineText(record: YtsheetRecord, key: string): string {
+  return readYtsheetText(record.text(key), 'multiline');
+}
+
+/**
+ * コマの名前を読む。`namePlate` が空なら、`name` を読む。
+ *
+ * @param record ゆとシートの記録
+ * @returns コマの名前
+ */
+function nameOfPiece(record: YtsheetRecord): string {
+  const plate = lineText(record, 'namePlate');
+  return plate === '' ? lineText(record, 'name') : plate;
+}
+
+/**
+ * 能力値ごとに、基本値と能力値（ボーナス）を読む。
+ *
+ * @param record ゆとシートの記録
+ * @returns 能力値ごとの値
+ */
+function abilitiesOf(record: YtsheetRecord): Record<Ar2eAbilityId, Ar2eAbilityScore> {
+  const scores = {} as Record<Ar2eAbilityId, Ar2eAbilityScore>;
+  for (const ability of AR2E_ABILITIES) {
+    const key = ABILITY_KEYS[ability.id];
+    scores[ability.id] = { base: record.number(`stt${key}Base`), bonus: record.number(`stt${key}Total`) };
+  }
+  return scores;
+}
+
+/**
+ * 判定ごとに、ダイス数と固定値を読む。
+ * 特殊な判定でダイス数がないものは、元の能力値の判定のダイス数から補う。
+ *
+ * @param record ゆとシートの記録
+ * @returns 判定ごとの振り方
+ */
+function checksOf(record: YtsheetRecord): Record<Ar2eCheckId, Ar2eCheckScore> {
+  const scores = {} as Record<Ar2eCheckId, Ar2eCheckScore>;
+  for (const check of AR2E_CHECKS) {
+    const key = CHECK_KEYS[check.id];
+    scores[check.id] = { dice: record.number(`roll${key}Dice`), modifier: record.number(`roll${key}`) };
+  }
+  // 特殊な判定でダイス数がないものだけ、上で読んだダイス数を、補ったダイス数で上書きする
+  for (const check of AR2E_SPECIAL_CHECKS) {
+    const score = scores[check.id];
+    if (score.dice == null)
+      scores[check.id] = { ...score, dice: supplementedDice(record, CHECK_KEYS[check.id], scores[check.ability].dice) };
+  }
+  return scores;
+}
+
+/**
+ * 特殊な判定のダイス数を、元の能力値の判定のダイス数に、足すダイス数を足して求める。
+ *
+ * @param record ゆとシートの記録
+ * @param key 特殊な判定の、ゆとシートの項目名に入る記号
+ * @param abilityDice 元の能力値の判定のダイス数
+ * @returns ダイス数。元の能力値の判定のダイス数がないときは null
+ */
+function supplementedDice(record: YtsheetRecord, key: string, abilityDice: number | null): number | null {
+  if (abilityDice == null) return null;
+  // ゆとシートの計算と同じ求め方
+  return abilityDice + (record.number(`roll${key}DiceAdd`) ?? 0);
+}
+
+/**
+ * 戦闘の値（命中、攻撃力、回避、防御力、行動値、移動力）を読む。
+ *
+ * @param record ゆとシートの記録
+ * @returns 戦闘の値
+ */
+function battleOf(record: YtsheetRecord): Ar2eBattle {
+  return {
+    accuracy: {
+      dice: record.number('battleDiceAcc'),
+      total: record.number('battleTotalAcc'),
+      right: record.number('battleTotalAccR'),
+      left: record.number('battleTotalAccL'),
+    },
+    attack: {
+      dice: record.number('battleDiceAtk'),
+      total: record.number('battleTotalAtk'),
+      right: record.number('battleTotalAtkR'),
+      left: record.number('battleTotalAtkL'),
+    },
+    evasion: { dice: record.number('battleDiceEva'), modifier: record.number('battleTotalEva') },
+    physicalDefense: record.number('battleTotalDef'),
+    magicalDefense: record.number('battleTotalMDef'),
+    initiative: record.number('battleTotalIni'),
+    movement: record.number('battleTotalMove'),
+  };
+}
+
+/**
+ * 手に持つものが武器かを読む。
+ *
+ * 名前が空か「なし」の書き方の手と、種別が盾の手は、武器を持たない。種別が書かれていれば、武器を持つ。
+ * 種別が空か「なし」の書き方なら、攻撃の値が 0 でない数のときだけ、武器を持つ。
+ *
+ * @param record ゆとシートの記録
+ * @param part 部位の記号（`HandR` か `HandL`）
+ * @returns 手。武器を持つなら、その名前
+ */
+function handOf(record: YtsheetRecord, part: 'HandR' | 'HandL'): Ar2eHand {
+  const name = lineText(record, `armament${part}Name`);
+  if (isBlank(name)) return { weapon: null };
+  const type = lineText(record, `armament${part}Type`);
+  if (type === SHIELD_TYPE) return { weapon: null };
+  if (!isBlank(type)) return { weapon: name };
+  // ゆとシートの閲覧画面は種別だけで見分けるが、種別を空欄にした武器を持つ人が多いので、攻撃の値でも見分ける
+  const attack = record.number(`armament${part}Atk`);
+  return { weapon: attack != null && attack !== 0 ? name : null };
+}
+
+/**
+ * 右手と左手の合計の仕方を読む。
+ *
+ * 右手の命中の値（`battleTotalAccR`）がないシートは、両手を合計する。
+ * そうでなければ合計の仕方の記号を読み、記号がないか、知らない記号なら、合計しない。
+ *
+ * @param record ゆとシートの記録
+ * @returns 右手と左手の合計の仕方
+ */
+function handednessOf(record: YtsheetRecord): Ar2eHandedness {
+  if (record.number('battleTotalAccR') == null) return HANDEDNESS_WITHOUT_HAND_VALUES;
+  const code = record.number('handedness');
+  return (code != null ? HANDEDNESS_CODES.get(code) : undefined) ?? HANDEDNESS_WHEN_UNSET;
+}
+
+/**
+ * 名前のあるスキルを読む。行の数は `skillNum`、なければ `skillsNum` を読む。
+ * コストの数は、コストの記録の値（HTML の書き方を戻す前）が整数のときだけ入れる。
+ *
+ * @param record ゆとシートの記録
+ * @returns 名前のあるスキル（シートの順）
+ */
+function skillsOf(record: YtsheetRecord): Ar2eSkill[] {
+  return namedRowsOf(record, 'skill', ['skillNum', 'skillsNum'], (index) => {
+    const field = (name: string) => lineText(record, `skill${index}${name}`);
+    const costPoints = record.number(`skill${index}Cost`);
+    return {
+      name: field('Name'),
+      source: skillSourceOf(record, `skill${index}Type`),
+      category: field('Category'),
+      level: field('Lv'),
+      timing: field('Timing'),
+      check: field('Roll'),
+      target: field('Target'),
+      range: field('Range'),
+      cost: field('Cost'),
+      costPoints: Number.isInteger(costPoints) ? costPoints : null,
+      requirement: field('Reqd'),
+      effect: field('Note'),
+    };
+  });
+}
+
+/**
+ * スキルの取得元を読む。記号はゆとシートの閲覧画面と同じ言葉にし、記号でないもの（クラス名）はそのまま読む。
+ * `power` は「パワー」にし、CL1 のメインクラス（`classMainLv1`）があれば「パワー（クラス名）」にする。
+ *
+ * @param record ゆとシートの記録
+ * @param key 取得元の項目名
+ * @returns 取得元の言葉
+ */
+function skillSourceOf(record: YtsheetRecord, key: string): string {
+  const source = lineText(record, key);
+  if (source === 'power') {
+    const powerClass = lineText(record, 'classMainLv1');
+    return powerClass === '' ? 'パワー' : `パワー（${powerClass}）`;
+  }
+  return SKILL_SOURCE_WORDS.get(source) ?? source;
+}
+
+/**
+ * 名前のある誓約を読む。行の数は `geisNum`、なければ `geisesNum` を読む。
+ *
+ * @param record ゆとシートの記録
+ * @returns 名前のある誓約（シートの順）
+ */
+function geisesOf(record: YtsheetRecord): Ar2eGeis[] {
+  return namedRowsOf(record, 'geis', ['geisNum', 'geisesNum'], (index) => ({
+    name: lineText(record, `geis${index}Name`),
+    growth: record.number(`geis${index}Cost`),
+    note: lineText(record, `geis${index}Note`),
+  }));
+}
+
+/**
+ * 名前のあるコネクションを読む。行の数は `connectionNum`、なければ `connectionsNum` を読む。
+ *
+ * @param record ゆとシートの記録
+ * @returns 名前のあるコネクション（シートの順）
+ */
+function connectionsOf(record: YtsheetRecord): Ar2eConnection[] {
+  return namedRowsOf(record, 'connection', ['connectionNum', 'connectionsNum'], (index) => ({
+    name: lineText(record, `connection${index}Name`),
+    relation: lineText(record, `connection${index}Relation`),
+    note: lineText(record, `connection${index}Note`),
+  }));
+}
+
+/**
+ * プロフィールを読む。
+ * 種族が自由記入（`free`）なら `raceFree` を読む。参照元のアドレスは、アドレスの欄として読む。
+ *
+ * @param record ゆとシートの記録
+ * @returns プロフィール
+ */
+function profileOf(record: YtsheetRecord): Ar2eProfile {
+  const raceKey = lineText(record, 'race') === 'free' ? 'raceFree' : 'race';
+  return {
+    player: lineText(record, 'playerName'),
+    level: record.number('level'),
+    race: lineText(record, raceKey),
+    gender: lineText(record, 'gender'),
+    age: lineText(record, 'age'),
+    mainClass: lineText(record, 'classMain'),
+    supportClass: lineText(record, 'classSupport'),
+    titleClass: lineText(record, 'classTitle'),
+    guild: lineText(record, 'guildName'),
+    note: multilineText(record, 'freeNote'),
+    sheetUrl: readYtsheetText(record.text('sheetURL'), 'url'),
+  };
+}
+
+/**
+ * 番号の付いた行（スキル、誓約、コネクション）を、名前のある行だけ読む。
+ *
+ * 行の数までの番号のうち、記録に名前の項目がある番号だけを読む。
+ *
+ * @param record ゆとシートの記録
+ * @param rowKey 行の項目名の、番号の前の部分（例: `skill`）
+ * @param countKeys 行の数の項目名（見る順）
+ * @param readRow 番号の行を読む関数
+ * @returns 名前のある行（番号の順）
+ */
+function namedRowsOf<T extends { readonly name: string }>(
+  record: YtsheetRecord,
+  rowKey: string,
+  countKeys: string[],
+  readRow: (index: bigint) => T
+): T[] {
+  const count = record.firstWholeNumber(...countKeys) ?? 0n;
+  // 行の数まで順に数えず、記録に名前の項目がある番号だけを読む。
+  // 名前の項目がない番号の行は読んでも何も作らないので、行の数に大きな数が書かれていても、取り込みが止まらない
+  return record
+    .indexesOf(rowKey, 'Name')
+    .filter((index) => index <= count)
+    .map(readRow)
+    .filter((row) => row.name !== '');
+}
