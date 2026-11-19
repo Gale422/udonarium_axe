@@ -1,5 +1,6 @@
 // 動きのテスト。
 // 取り込みから組み立てまで通したコマと、そのパレットの行を、アックスの本物の処理（参照、リソース操作、バフ、ダイス）で確かめる。
+import { TestBed } from '@angular/core/testing';
 import { buffKindMarkOf } from '@axe/domain/character/buff-kind';
 import { buffEffectTimingOf, buffExpires, BuffTiming, buffTimingOf } from '@axe/domain/character/buff-timing';
 import { DEFAULT_STATUS_AILMENTS } from '@axe/domain/character/builtin-status-ailments';
@@ -12,6 +13,7 @@ import {
 import { StatusAilmentCatalog } from '@axe/domain/character/status-ailment-catalog';
 import { evaluateCharacterReferences } from '@axe/domain/chat/chat-palette';
 import { DataElement, DataElementAttribute } from '@axe/domain/data/data-element';
+import { TEST_PROVIDERS } from '@axe/testing/test-providers';
 import {
   baseSheet,
   SheetChange,
@@ -35,6 +37,11 @@ import {
   withImportedPiece,
 } from '@axe/testing/ytsheet-ar2e/ytsheet-ar2e-piece';
 import GameSystemClass from 'bcdice/lib/game_system';
+
+// パレットの行を送る下準備（`sendLine`）は、送る処理を、アプリの部品の組から取り出して使う
+beforeEach(() => {
+  TestBed.configureTestingModule({ providers: [...TEST_PROVIDERS] });
+});
 
 /**
  * パレットの送れる行のうち、書き出しが同じ最初の行を探す。
@@ -603,12 +610,12 @@ describe('パレットのダイス（仕様書「判定の見出しのかたま�
       lineStartingWith(piece, '{筋力判定ダイス}D6+{筋力判定}>=? 【筋力】判定'),
       threes
     );
-    expect(roll).toBe('Arianrhod : (2D6+4>=?) ＞ 6[3,3]+4 ＞ 10');
+    expect(roll).toBe('Arianrhod : (2D6+4>=?) → 6[3,3]+4 → 10');
   });
 
   it('判定（目標値）の行は、目標値と比べて振られる', async () => {
     const line = lineStartingWith(piece, '{筋力判定ダイス}D6+{筋力判定}>={目標値}');
-    expect((await sendLine(piece, line, threes, 13)).roll).toBe('Arianrhod : (2D6+4>=13) ＞ 6[3,3]+4 ＞ 10 ＞ 失敗');
+    expect((await sendLine(piece, line, threes, 13)).roll).toBe('Arianrhod : (2D6+4>=13)\n→ 6[3,3]+4\n→ 10\n→ 失敗');
   });
 
   it('判定（目標値）の行は、目標値が見つからないと振られない', async () => {
@@ -619,7 +626,7 @@ describe('パレットのダイス（仕様書「判定の見出しのかたま�
   it('命中判定は >? で振られ、6 が 2 つでクリティカルになる', async () => {
     const system = withFixedDice(await loadArianrhod(), [6]);
     const { roll } = await sendLine(piece, lineStartingWith(piece, '{命中ダイス}D6+{右手命中}>?'), system);
-    expect(roll).toBe('Arianrhod : (2D6+5>?) ＞ 12[6,6]+5 ＞ 17 ＞ クリティカル(+2D6)');
+    expect(roll).toBe('Arianrhod : (2D6+5>?)\n→ 12[6,6]+5\n→ 17\n→ クリティカル(+2D6)');
   });
 
   it('ダイスを振る行は、39 行すべてが、本物のダイスの仕組みで、行の振り方のとおりに振られる', async () => {
@@ -628,12 +635,14 @@ describe('パレットのダイス（仕様書「判定の見出しのかたま�
     expect(rollLines).toHaveLength(15 * 2 + 2 + 4 + 3);
     for (const line of rollLines) {
       const { sent, roll } = await sendLine(piece, line, threes, 13);
-      expect(roll.startsWith(`Arianrhod : (${sent.split(' ')[0]}) ＞ `), `${line} → ${roll}`).toBe(true);
+      // チャットは、→ が 3 つ以上ある結果を、→ の前で改行して出すので、改行を空白に戻して比べる
+      const oneLine = roll.replace(/\n/g, ' ');
+      expect(oneLine.startsWith(`Arianrhod : (${sent.split(' ')[0]}) → `), `${line} → ${roll}`).toBe(true);
     }
   });
 
   it('ダメージの行は、合計を振る', async () => {
     const { roll } = await sendLine(piece, lineStartingWith(piece, '{攻撃ダイス}D6+{右手攻撃力}'), threes);
-    expect(roll).toBe('Arianrhod : (2D6+9) ＞ 6[3,3]+9 ＞ 15');
+    expect(roll).toBe('Arianrhod : (2D6+9) → 6[3,3]+9 → 15');
   });
 });

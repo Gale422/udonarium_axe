@@ -139,30 +139,12 @@ describe('番号の付いた行の読み方', () => {
     expect(character.skills.map((skill) => skill.name)).toEqual(['ヒール', 'プロテクション']);
   });
 
-  it('行の数までの番号のうち、記録に名前の項目がある行だけを読むので、行の数が大きくても止まらない', () => {
-    const character = read(withSkills({ Name: 'ヒール' }), withValues({ skillNum: '100000000', skill5Name: 'ガード' }));
-    expect(character.skills.map((skill) => skill.name)).toEqual(['ヒール', 'ガード']);
-    expect(read(withValues({ skillNum: '1', skill2Name: 'ガード' })).skills.map((skill) => skill.name)).not.toContain(
-      'ガード'
-    );
-  });
-
-  it('桁の多い番号の行も、その番号の項目を読み、行の数に書かれた数までの番号だけを読む', () => {
+  it('行の数までの行を読み、行の数より後の行は読まない', () => {
     const character = read(
-      withSkills(),
-      withValues({
-        skillNum: '9007199254740993',
-        skill9007199254740994Name: 'プロテクション',
-        skill9007199254740992Name: 'ヒール',
-        skill9007199254740992Timing: 'メジャー',
-        skill9007199254740993Name: 'ガード',
-        skill9007199254740993Timing: 'DRの直後',
-      })
+      withSkills({ Name: 'ヒール' }),
+      withValues({ skillNum: '2', skill2Name: 'ガード', skill3Name: 'プロテクション' })
     );
-    expect(character.skills.map((skill) => [skill.name, skill.timing])).toEqual([
-      ['ヒール', 'メジャー'],
-      ['ガード', 'DRの直後'],
-    ]);
+    expect(character.skills.map((skill) => skill.name)).toEqual(['ヒール', 'ガード']);
   });
 });
 

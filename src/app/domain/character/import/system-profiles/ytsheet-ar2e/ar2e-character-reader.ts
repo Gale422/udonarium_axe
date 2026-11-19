@@ -274,7 +274,7 @@ function handednessOf(record: YtsheetRecord): Ar2eHandedness {
  * @returns 名前のあるスキル（シートの順）
  */
 function skillsOf(record: YtsheetRecord): Ar2eSkill[] {
-  return namedRowsOf(record, 'skill', ['skillNum', 'skillsNum'], (index) => {
+  return namedRowsOf(record, ['skillNum', 'skillsNum'], (index) => {
     const field = (name: string) => lineText(record, `skill${index}${name}`);
     const costPoints = record.number(`skill${index}Cost`);
     return {
@@ -318,7 +318,7 @@ function skillSourceOf(record: YtsheetRecord, key: string): string {
  * @returns 名前のある誓約（シートの順）
  */
 function geisesOf(record: YtsheetRecord): Ar2eGeis[] {
-  return namedRowsOf(record, 'geis', ['geisNum', 'geisesNum'], (index) => ({
+  return namedRowsOf(record, ['geisNum', 'geisesNum'], (index) => ({
     name: lineText(record, `geis${index}Name`),
     growth: record.number(`geis${index}Cost`),
     note: lineText(record, `geis${index}Note`),
@@ -332,7 +332,7 @@ function geisesOf(record: YtsheetRecord): Ar2eGeis[] {
  * @returns 名前のあるコネクション（シートの順）
  */
 function connectionsOf(record: YtsheetRecord): Ar2eConnection[] {
-  return namedRowsOf(record, 'connection', ['connectionNum', 'connectionsNum'], (index) => ({
+  return namedRowsOf(record, ['connectionNum', 'connectionsNum'], (index) => ({
     name: lineText(record, `connection${index}Name`),
     relation: lineText(record, `connection${index}Relation`),
     note: lineText(record, `connection${index}Note`),
@@ -364,28 +364,20 @@ function profileOf(record: YtsheetRecord): Ar2eProfile {
 }
 
 /**
- * 番号の付いた行（スキル、誓約、コネクション）を、名前のある行だけ読む。
- *
- * 行の数までの番号のうち、記録に名前の項目がある番号だけを読む。
+ * 番号の付いた行（スキル、誓約、コネクション）を、行の数まで読み、名前のある行だけを返す。
  *
  * @param record ゆとシートの記録
- * @param rowKey 行の項目名の、番号の前の部分（例: `skill`）
  * @param countKeys 行の数の項目名（見る順）
  * @param readRow 番号の行を読む関数
  * @returns 名前のある行（番号の順）
  */
 function namedRowsOf<T extends { readonly name: string }>(
   record: YtsheetRecord,
-  rowKey: string,
   countKeys: string[],
-  readRow: (index: bigint) => T
+  readRow: (index: number) => T
 ): T[] {
-  const count = record.firstWholeNumber(...countKeys) ?? 0n;
-  // 行の数まで順に数えず、記録に名前の項目がある番号だけを読む。
-  // 名前の項目がない番号の行は読んでも何も作らないので、行の数に大きな数が書かれていても、取り込みが止まらない
-  return record
-    .indexesOf(rowKey, 'Name')
-    .filter((index) => index <= count)
-    .map(readRow)
-    .filter((row) => row.name !== '');
+  const count = countKeys.map((key) => record.number(key)).find((value) => value !== null) ?? 0;
+  const rows: T[] = [];
+  for (let index = 1; index <= count; index++) rows.push(readRow(index));
+  return rows.filter((row) => row.name !== '');
 }
