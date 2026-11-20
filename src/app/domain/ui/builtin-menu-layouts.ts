@@ -96,6 +96,7 @@ const FAB: MenuLayout = {
         'tableQuality',
         'language',
         'menuEditor',
+        'operationManual',
         'useMobileLayout',
       ],
       { testId: 'fab-display', menuTestId: 'seat-display' }

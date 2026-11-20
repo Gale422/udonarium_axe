@@ -7018,6 +7018,7 @@
       "foldToolbar": "ツールバーを畳む",
       "unfoldToolbar": "ツールバーを開く",
       "buttonGuide": "ボタンの名前をすべて表示（? キー）",
+      "operationManual": "操作マニュアル",
       "soundSettings": "音の設定"
     },
     "restoreWhileReplayBoard": "記録の盤面を映しているあいだは、前回の卓を復元できません。「卓に戻す」で戻してから復元してください",

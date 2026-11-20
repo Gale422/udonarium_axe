@@ -20,6 +20,7 @@ import { ContextMenuService } from '@axe/application/ui/context-menu.service';
 import { MobileLayoutService } from '@axe/application/ui/mobile-layout.service';
 import { MotionService, MotionSetting } from '@axe/application/ui/motion.service';
 import { NpcBarService } from '@axe/application/ui/npc-bar.service';
+import { OperationManualService } from '@axe/application/ui/operation-manual.service';
 import { PieceOverlayPreferenceService } from '@axe/application/ui/piece-overlay-preference.service';
 import { RenderLiteService, RenderLiteSetting } from '@axe/application/ui/render-lite.service';
 import { Theme, ThemeService } from '@axe/application/ui/theme.service';
@@ -143,6 +144,7 @@ export class MenuCommandService {
   private readonly overlay = inject(PieceOverlayPreferenceService);
   private readonly widgets = inject(WidgetVisibilityService);
   private readonly buttonGuide = inject(ButtonGuideService);
+  private readonly operationManual = inject(OperationManualService);
   private readonly firstPerson = inject(FirstPersonService);
   private readonly startRoom = inject(StartRoomService);
   private readonly contextMenu = inject(ContextMenuService);
@@ -635,6 +637,9 @@ export class MenuCommandService {
         return 'done';
       case 'buttonGuide':
         this.buttonGuide.show();
+        return 'done';
+      case 'operationManual':
+        this.operationManual.open();
         return 'done';
       case 'firstPersonView':
         this.toggleFirstPerson();

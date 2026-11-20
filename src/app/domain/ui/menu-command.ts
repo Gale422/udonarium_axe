@@ -80,6 +80,7 @@ export const MENU_ACTS = [
   'turnPrev',
   'releaseOwnership',
   'buttonGuide',
+  'operationManual',
   'firstPersonView',
 ] as const;
 
@@ -336,6 +337,7 @@ export const MENU_COMMANDS: readonly MenuCommand[] = [
   act('turnPrev', 'chevron_left', 'feature.turnOrder.prev', { audience: 'gameMaster' }),
   act('releaseOwnership', 'key_off', 'app.fab.releaseOwnership', { audience: 'gameMaster' }),
   act('buttonGuide', 'help_outline', 'app.fab.buttonGuide'),
+  act('operationManual', 'library_books', 'app.fab.operationManual'),
   act('firstPersonView', 'visibility', 'app.fab.firstPersonEnter', { audience: 'playing', surfaces: ['fab'] }),
 
   custom('turnIndicator', 'hourglass_top', 'feature.turnOrder.title', { surfaces: TOOLBARS }),
