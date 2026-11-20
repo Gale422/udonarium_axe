@@ -2,7 +2,7 @@
 // データの文字を、ゆとシートの画面に表示されるとおりの文字に読む処理を確かめる。
 import { readYtsheetText } from '@axe/domain/character/import/ytsheet-text';
 
-describe('ゆとシートの文字の読み方', () => {
+describe('ゆとシートの文字の読み方（仕様書「ゆとシートの文字の読み方」「ゆとシートの値の加工」）', () => {
   it('HTML の書き方を戻し、改行の書き方を改行にする', () => {
     expect(readYtsheetText('A &amp; B&lt;br&gt;&quot;引用&quot; &lt;強&gt;', 'line')).toBe('A & B\n"引用" <強>');
   });

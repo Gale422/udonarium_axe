@@ -5,9 +5,7 @@
  * ルールの意味とアックスの書き方は持たない。
  */
 import { asString } from '@axe/domain/character/import/imported-character';
-
-/** 10 進の数の書き方（符号と小数を含む）。「1e+20」のような書き方は、数として読まない */
-const DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
+import { readSheetInteger, readSheetNumber } from '@axe/domain/character/import/sheet-number';
 
 /** ゆとシートの記録。生の記録を隠し、項目名で文字か数を取り出す */
 export class YtsheetRecord {
@@ -31,16 +29,22 @@ export class YtsheetRecord {
   }
 
   /**
-   * 項目の値を、10 進の数として取り出す。文字の数も、前後の空白を除いて読む。小数も読む。
+   * 項目の値を、シートの値の読み方で、10 進の数として取り出す。
    *
    * @param key 項目名
    * @returns 数。ないときと、10 進の数として読めないときと、有限の数にならないときは null
    */
   number(key: string): number | null {
-    const raw = this.raw[key];
-    // ゆとシートは、数もほとんど文字で出すため、文字の数も読む
-    const text = typeof raw === 'string' ? raw.trim() : null;
-    const value = typeof raw === 'number' ? raw : text !== null && DECIMAL.test(text) ? Number(text) : null;
-    return value !== null && Number.isFinite(value) ? value : null;
+    return readSheetNumber(this.raw[key]);
+  }
+
+  /**
+   * 項目の値を、シートの値の読み方で、10 進の整数として取り出す。
+   *
+   * @param key 項目名
+   * @returns 整数。ないときと、10 進の数として読めないときと、整数でないときは null
+   */
+  integer(key: string): number | null {
+    return readSheetInteger(this.raw[key]);
   }
 }

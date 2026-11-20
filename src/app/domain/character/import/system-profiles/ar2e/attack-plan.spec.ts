@@ -1,7 +1,7 @@
 // 攻撃の組み合わせの単体テスト。
 // 手と合計の仕方から決めた、命中判定とダメージの行の組を確かめる。
-import { Ar2eHandedness, Ar2eHands } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-character';
-import { AttackPlan, planAttacks } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/attack-plan';
+import { Ar2eHandedness, Ar2eHands } from '@axe/domain/character/import/system-profiles/ar2e/ar2e-character';
+import { AttackPlan, planAttacks } from '@axe/domain/character/import/system-profiles/ar2e/attack-plan';
 
 /**
  * 右手と左手を作る。

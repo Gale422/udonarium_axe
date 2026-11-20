@@ -2,13 +2,13 @@
  * 欄の案。
  *
  * アリアンロッド2E のキャラクターとスキルの置き場から、コマの見出し・項目・設定を、取り込みの中間の形で並べる。
- * パレットと、ゆとシートの項目名は持たない。
+ * パレットと、サイトの項目名は持たない。
  */
 import { skillMark } from '@axe/domain/character/import/axe-notation';
 import { ImportedField, ImportedGroup, ImportedSection } from '@axe/domain/character/import/imported-character';
 import { ImportedFieldSettings } from '@axe/domain/character/import/imported-character-extension';
-import { AR2E_ABILITIES, AR2E_CHECKS } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-catalog';
-import { Ar2eCharacter, Ar2eSkill } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-character';
+import { AR2E_ABILITIES, AR2E_CHECKS } from '@axe/domain/character/import/system-profiles/ar2e/ar2e-catalog';
+import { Ar2eCharacter, Ar2eSkill } from '@axe/domain/character/import/system-profiles/ar2e/ar2e-character';
 import {
   abilityFieldNames,
   AR2E_FIELD_NAMES,
@@ -18,7 +18,7 @@ import {
   sheetGroupNameOf,
   SKILL_SECTION_NAME,
   SkillHeading,
-} from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/reference-names';
+} from '@axe/domain/character/import/system-profiles/ar2e/reference-names';
 
 /** 決まった項目の識別子（`AR2E_FIELD_NAMES` の見出し） */
 type FixedFieldId = keyof typeof AR2E_FIELD_NAMES;
@@ -186,7 +186,7 @@ function skillSection(skills: readonly SkillHeading[]): ImportedSection {
 }
 
 /**
- * スキルの説明の文を作る。並びと言葉は、ゆとシートのスキルの表と同じ。空の項目と、中身が全部空の行は省く。
+ * スキルの説明の文を作る。並びは、ゆとシートのスキルの表と同じ。空の項目と、中身が全部空の行は省く。
  * コストが 0 か空なら「―」にする。
  *
  * @param skill スキル
@@ -197,7 +197,7 @@ export function skillDescriptionOf(skill: Ar2eSkill): string {
   const cost = COST_SHOWN_AS_NONE.has(skill.cost) ? NO_COST : skill.cost;
   return [
     skillMark(skill.name) + item('取得元', skill.source) + item('分類', skill.category),
-    item('Lv', skill.level) + item('タイミング', skill.timing) + item('判定', skill.check),
+    item('SL', skill.level) + item('タイミング', skill.timing) + item('判定', skill.check),
     item('対象', skill.target) + item('射程', skill.range),
     `[コスト:${cost}]` + item('使用条件', skill.requirement),
     skill.effect === '' ? '' : `[効果]:${skill.effect}`,

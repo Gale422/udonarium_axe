@@ -2,10 +2,10 @@
  * アリアンロッド2E のキャラクター。
  *
  * ルールの言葉で見たキャラクター。型だけを持つ。
- * ゆとシートの項目名と、アックスの欄の名前は持たない。文字は、ゆとシートの画面に表示されるとおりの文字で持つ。
+ * サイトの項目名と、アックスの欄の名前は持たない。文字は、サイトの画面に表示されるとおりの文字で持つ。
  * 値がないときは null。
  */
-import { Ar2eAbilityId, Ar2eCheckId } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-catalog';
+import { Ar2eAbilityId, Ar2eCheckId } from '@axe/domain/character/import/system-profiles/ar2e/ar2e-catalog';
 
 export interface Ar2eCharacter {
   /** コマの名前 */
@@ -28,7 +28,7 @@ export interface Ar2eCharacter {
   readonly profile: Ar2eProfile;
 }
 
-/** HP、MP、フェイト。どれも、取り込んだ時点の値（最大値と同じ） */
+/** HP、MP、フェイト（どれも、取り込んだ時点の値で、最大値と同じ）と、フェイト使用上限 */
 export interface Ar2eResources {
   readonly hp: number | null;
   readonly mp: number | null;
@@ -97,7 +97,7 @@ export type Ar2eHandedness = 'separate' | 'both' | 'accuracyOnly' | 'all';
 /** スキル */
 export interface Ar2eSkill {
   readonly name: string;
-  /** 取得元（ゆとシートの閲覧画面と同じ言葉） */
+  /** 取得元（サイトの画面と同じ言葉） */
   readonly source: string;
   readonly category: string;
   readonly level: string;
@@ -108,7 +108,7 @@ export interface Ar2eSkill {
   readonly range: string;
   /** コストの文字 */
   readonly cost: string;
-  /** コストの記録の値（HTML の書き方を戻す前）が整数のときの、その数 */
+  /** シートのコストの値が、10 進の整数として読めるときの、その数 */
   readonly costPoints: number | null;
   /** 使用条件 */
   readonly requirement: string;
@@ -136,7 +136,7 @@ export interface Ar2eConnection {
 /** 携行品 */
 export interface Ar2eBelongings {
   readonly money: number | null;
-  /** 携行品・所持品（書かれたまま） */
+  /** 携行品・所持品の文字 */
   readonly items: string;
 }
 

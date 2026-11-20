@@ -1,19 +1,18 @@
 /**
- * 読み手。
+ * ゆとシートの読み手。
  *
  * ゆとシートの記録を、ルールの言葉のアリアンロッド2E のキャラクターに読み替える。
- * 版の違いの補い、手の見分け、取得元の言葉、ダイス数の補いもここで行う。
+ * 版の違いの補い、取得元の言葉、ダイス数の補いもここで行う。手が武器を持つかは、手に持つものの見分けで決める。
  * 欄の並べ方と、アックスの書き方は持たない。
  */
 import { normalizeHexColor } from '@axe/domain/character/import/imported-character';
 import {
   AR2E_ABILITIES,
   AR2E_CHECKS,
-  AR2E_NONE_MARKS,
   AR2E_SPECIAL_CHECKS,
   Ar2eAbilityId,
   Ar2eCheckId,
-} from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-catalog';
+} from '@axe/domain/character/import/system-profiles/ar2e/ar2e-catalog';
 import {
   Ar2eAbilityScore,
   Ar2eBattle,
@@ -25,7 +24,8 @@ import {
   Ar2eHandedness,
   Ar2eProfile,
   Ar2eSkill,
-} from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-character';
+} from '@axe/domain/character/import/system-profiles/ar2e/ar2e-character';
+import { ar2eHandOf } from '@axe/domain/character/import/system-profiles/ar2e/ar2e-hand';
 import { YtsheetRecord } from '@axe/domain/character/import/ytsheet-record';
 import { readYtsheetText } from '@axe/domain/character/import/ytsheet-text';
 
@@ -79,23 +79,12 @@ const SKILL_SOURCE_WORDS: ReadonlyMap<string, string> = new Map([
 ]);
 
 /**
- * 手の名前と種別が、何も書かれていないかを見る。
- *
- * @param text 手の名前か種別
- * @returns 空か「なし」の書き方なら true
- */
-const isBlank = (text: string): boolean => text === '' || AR2E_NONE_MARKS.has(text);
-
-/** 盾の種別 */
-const SHIELD_TYPE = '盾';
-
-/**
  * ゆとシートの記録を、アリアンロッド2E のキャラクターに読み替える。
  *
  * @param record ゆとシートの記録
  * @returns アリアンロッド2E のキャラクター
  */
-export function readAr2eCharacter(record: YtsheetRecord): Ar2eCharacter {
+export function readYtsheetAr2eCharacter(record: YtsheetRecord): Ar2eCharacter {
   return {
     name: nameOfPiece(record),
     color: normalizeHexColor(lineText(record, 'nameColor').split(',')[0]),
@@ -231,24 +220,18 @@ function battleOf(record: YtsheetRecord): Ar2eBattle {
 }
 
 /**
- * 手に持つものが武器かを読む。
- *
- * 名前が空か「なし」の書き方の手と、種別が盾の手は、武器を持たない。種別が書かれていれば、武器を持つ。
- * 種別が空か「なし」の書き方なら、攻撃の値が 0 でない数のときだけ、武器を持つ。
+ * 手に持つものの名前・種別・攻撃の値を読み、手に持つものの見分けで、武器を持つ手かを決める。
  *
  * @param record ゆとシートの記録
  * @param part 部位の記号（`HandR` か `HandL`）
  * @returns 手。武器を持つなら、その名前
  */
 function handOf(record: YtsheetRecord, part: 'HandR' | 'HandL'): Ar2eHand {
-  const name = lineText(record, `armament${part}Name`);
-  if (isBlank(name)) return { weapon: null };
-  const type = lineText(record, `armament${part}Type`);
-  if (type === SHIELD_TYPE) return { weapon: null };
-  if (!isBlank(type)) return { weapon: name };
-  // ゆとシートの閲覧画面は種別だけで見分けるが、種別を空欄にした武器を持つ人が多いので、攻撃の値でも見分ける
-  const attack = record.number(`armament${part}Atk`);
-  return { weapon: attack != null && attack !== 0 ? name : null };
+  return ar2eHandOf({
+    name: lineText(record, `armament${part}Name`),
+    type: lineText(record, `armament${part}Type`),
+    attack: record.number(`armament${part}Atk`),
+  });
 }
 
 /**
@@ -276,7 +259,6 @@ function handednessOf(record: YtsheetRecord): Ar2eHandedness {
 function skillsOf(record: YtsheetRecord): Ar2eSkill[] {
   return namedRowsOf(record, ['skillNum', 'skillsNum'], (index) => {
     const field = (name: string) => lineText(record, `skill${index}${name}`);
-    const costPoints = record.number(`skill${index}Cost`);
     return {
       name: field('Name'),
       source: skillSourceOf(record, `skill${index}Type`),
@@ -287,7 +269,7 @@ function skillsOf(record: YtsheetRecord): Ar2eSkill[] {
       target: field('Target'),
       range: field('Range'),
       cost: field('Cost'),
-      costPoints: Number.isInteger(costPoints) ? costPoints : null,
+      costPoints: record.integer(`skill${index}Cost`),
       requirement: field('Reqd'),
       effect: field('Note'),
     };

@@ -4,16 +4,10 @@ import { ImportedSection } from '@axe/domain/character/import/imported-character
 import {
   layoutAr2eSheet,
   skillDescriptionOf,
-} from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-sheet-layout';
-import { placeSkills } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/reference-names';
-import {
-  ar2eCharacterOf,
-  SheetChange,
-  sheetWith,
-  withoutKeys,
-  withRows,
-  withSkills,
-} from '@axe/testing/ytsheet-ar2e/ytsheet-ar2e-fixtures';
+} from '@axe/domain/character/import/system-profiles/ar2e/ar2e-sheet-layout';
+import { placeSkills } from '@axe/domain/character/import/system-profiles/ar2e/reference-names';
+import { SheetChange, withoutKeys } from '@axe/testing/ar2e/sheet-changes';
+import { ar2eCharacterOf, sheetWith, withRows, withSkills } from '@axe/testing/ytsheet-ar2e/ytsheet-ar2e-fixtures';
 
 /**
  * 架空のシートを変え、コマの欄を並べる。
@@ -186,7 +180,7 @@ describe('スキルの欄', () => {
       label: 'トレーニング:筋力',
       kind: 'note',
       value:
-        '≪トレーニング：筋力≫[取得元:一般]\n[Lv:1][タイミング:パッシブ][判定:―]\n[対象:自身][射程:―]\n[コスト:―][使用条件:―]\n[効果]:【筋力基本値】に+1する（架空の効果）。',
+        '≪トレーニング：筋力≫[取得元:一般]\n[SL:1][タイミング:パッシブ][判定:―]\n[対象:自身][射程:―]\n[コスト:―][使用条件:―]\n[効果]:【筋力基本値】に+1する（架空の効果）。',
     });
   });
 });
@@ -203,7 +197,7 @@ describe('スキルの説明', () => {
     return skillDescriptionOf(character.skills[0]);
   };
 
-  it('ゆとシートのスキルの表と同じ並びと言葉', () => {
+  it('ゆとシートのスキルの表と同じ並び', () => {
     expect(
       descriptionOf({
         Name: 'ヒール',
@@ -219,7 +213,7 @@ describe('スキルの説明', () => {
         Note: '《ヒール》を使う',
       })
     ).toBe(
-      '≪ヒール≫[取得元:アコライト][分類:魔術]\n[Lv:1][タイミング:メジャー][判定:魔術判定]\n[対象:単体][射程:20m]\n[コスト:4][使用条件:―]\n[効果]:《ヒール》を使う'
+      '≪ヒール≫[取得元:アコライト][分類:魔術]\n[SL:1][タイミング:メジャー][判定:魔術判定]\n[対象:単体][射程:20m]\n[コスト:4][使用条件:―]\n[効果]:《ヒール》を使う'
     );
   });
 

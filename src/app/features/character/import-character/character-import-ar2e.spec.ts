@@ -1,21 +1,63 @@
 /*
- * 画面の取り込みが呼ぶ入口から、ゆとシートのアリアンロッド2E の取り込みにつながることの確かめ。
+ * 画面の取り込みが呼ぶ入口から、サイトごとのアリアンロッド2E の取り込みにつながることの確かめ。
  * 入口に貼ったデータとアドレスで、取り込みの動きのテストと同じ流れで作るコマと、同じコマができるかを見る。
  */
 import { TestBed } from '@angular/core/testing';
 import { GameCharacter } from '@axe/domain/character/game-character';
 import { collectDataElements } from '@axe/domain/data/data-element-tree';
 import { CharacterImportService } from '@axe/features/character/import-character/character-import.service';
+import { importAr2ePiece } from '@axe/testing/ar2e/ar2e-piece';
+import { SheetData } from '@axe/testing/ar2e/sheet-changes';
+import { baseCharasheet } from '@axe/testing/charasheet-ar2e/charasheet-ar2e-fixtures';
 import { TEST_PROVIDERS } from '@axe/testing/test-providers';
 import { baseSheet } from '@axe/testing/ytsheet-ar2e/ytsheet-ar2e-fixtures';
-import { importAr2ePiece } from '@axe/testing/ytsheet-ar2e/ytsheet-ar2e-piece';
 
-/** 架空のシートのアドレス。ゆとシートのアリアンロッド2E の、1 人分の画面のアドレスの形 */
-const SHEET_URL = 'https://yutorize.work/ytsheet/ar2e/?id=test0001';
-/** 架空のシートのデータのアドレス。画面のアドレスに `mode=json` を付けた形 */
-const SHEET_JSON_URL = 'https://yutorize.work/ytsheet/ar2e/?id=test0001&mode=json';
+/** サイトごとの、貼るものと、そのとき取ってくるデータのアドレス */
+interface Ar2eImportSite {
+  /** 仕様書の、そのサイトの取り込みの対象の見出し */
+  readonly heading: string;
+  /** 架空のシートの土台 */
+  readonly base: () => SheetData;
+  /** 貼るものの説明、貼る文字、取ってくるデータのアドレス */
+  readonly pastes: readonly (readonly [string, string, readonly string[]])[];
+}
 
-describe('取り込みの対象', () => {
+const SITES: readonly Ar2eImportSite[] = [
+  {
+    heading: 'ゆとシートの取り込みの対象',
+    base: baseSheet,
+    pastes: [
+      ['シートのデータ', JSON.stringify(baseSheet()), []],
+      // 架空のシートの、1 人分の画面のアドレスの形。データのアドレスは、画面のアドレスに `mode=json` を付けた形
+      [
+        'シートのアドレス',
+        'https://yutorize.work/ytsheet/ar2e/?id=test0001',
+        ['https://yutorize.work/ytsheet/ar2e/?id=test0001&mode=json'],
+      ],
+    ],
+  },
+  {
+    heading: 'キャラクター保管所の取り込みの対象',
+    base: baseCharasheet,
+    pastes: [
+      ['シートのデータ', JSON.stringify(baseCharasheet()), []],
+      // 架空のシートの、1 人分の表示画面のアドレスの形。データのアドレスは、アドレスの最後の部分に `.js` を付けた形
+      [
+        'シートのアドレス',
+        'https://charasheet.vampire-blood.net/1234567',
+        ['https://charasheet.vampire-blood.net/1234567.js'],
+      ],
+      // 一覧に並ぶ、`m` で始まるもう 1 つの形のアドレス
+      [
+        'シートのもう 1 つの形のアドレス',
+        'https://charasheet.vampire-blood.net/m0123456789abcdef0123456789abcdef',
+        ['https://charasheet.vampire-blood.net/m0123456789abcdef0123456789abcdef.js'],
+      ],
+    ],
+  },
+];
+
+describe.each(SITES)('取り込みの対象（仕様書「$heading」）', (site) => {
   const made: GameCharacter[] = [];
 
   beforeEach(() => {
@@ -49,7 +91,7 @@ describe('取り込みの対象', () => {
    * @returns 作ったコマ
    */
   function expectedPiece(): GameCharacter {
-    const piece = importAr2ePiece(baseSheet());
+    const piece = importAr2ePiece(site.base());
     made.push(piece);
     return piece;
   }
@@ -67,18 +109,15 @@ describe('取り込みの対象', () => {
     return result.character;
   }
 
-  it.each<[string, () => string, string[]]>([
-    ['シートのデータ', () => JSON.stringify(baseSheet()), []],
-    ['シートのアドレス', () => SHEET_URL, [SHEET_JSON_URL]],
-  ])(
+  it.each(site.pastes)(
     '貼られた%sから、アリアンロッド2E の取り込みでコマを作る。取ってくるのは、データのアドレスだけ',
     async (_, pasted, fetchedUrls) => {
       const fetched = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
-        if (String(input) !== SHEET_JSON_URL) throw new TypeError(`取ってくるはずのないアドレス: ${String(input)}`);
-        return { ok: true, status: 200, text: async () => JSON.stringify(baseSheet()) } as Response;
+        if (!fetchedUrls.includes(String(input))) throw new TypeError(`取ってくるはずのないアドレス: ${String(input)}`);
+        return { ok: true, status: 200, text: async () => JSON.stringify(site.base()) } as Response;
       });
 
-      const piece = await importFromScreen(pasted());
+      const piece = await importFromScreen(pasted);
 
       expect(fetched.mock.calls.map(([input]) => String(input))).toEqual(fetchedUrls);
       expect(piece.chatPalette?.dicebot).toBe('Arianrhod');

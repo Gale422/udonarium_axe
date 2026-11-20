@@ -1,13 +1,13 @@
 // 参照の名前の単体テスト。
 // 決まった項目の名前と、スキルの置き場（タイミングの見出しと項目の名前）を確かめる。
-import { AR2E_TIMINGS, ar2eCheckOf } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-catalog';
-import { Ar2eSkill } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-character';
+import { AR2E_TIMINGS, ar2eCheckOf } from '@axe/domain/character/import/system-profiles/ar2e/ar2e-catalog';
+import { Ar2eSkill } from '@axe/domain/character/import/system-profiles/ar2e/ar2e-character';
 import {
   checkFieldNames,
   handFieldNames,
   placeSkills,
   sheetGroupNameOf,
-} from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/reference-names';
+} from '@axe/domain/character/import/system-profiles/ar2e/reference-names';
 /**
  * 名前とタイミングだけのスキルを作る。ほかの項目は空。
  *
@@ -68,6 +68,16 @@ describe('スキルのタイミングの見出し', () => {
     ).map(([heading]) => heading);
     expect(headings).toEqual(['パッシブ', 'メジャー', '効果参照', '―', '自由1', '自由2']);
   });
+
+  it.each(['―', 'ー', '-'])(
+    '「なし」の書き方「%s」のタイミングは、決まったタイミングの後、それ以外の前（仕様書「「なし」の書き方」）',
+    (none) => {
+      const headings = placed(skill('A', '自由1'), skill('B', none), skill('C', 'メジャー')).map(
+        ([heading]) => heading
+      );
+      expect(headings).toEqual(['メジャー', none, '自由1']);
+    }
+  );
 
   it('決まったタイミングの見出しは、シートの順に関わらず、決まったタイミングの並び（19 個すべて）', () => {
     const reversed = [...AR2E_TIMINGS].reverse().map((timing, index) => skill(`S${index}`, timing));

@@ -13,16 +13,6 @@ import {
 import { StatusAilmentCatalog } from '@axe/domain/character/status-ailment-catalog';
 import { evaluateCharacterReferences } from '@axe/domain/chat/chat-palette';
 import { DataElement, DataElementAttribute } from '@axe/domain/data/data-element';
-import { TEST_PROVIDERS } from '@axe/testing/test-providers';
-import {
-  baseSheet,
-  SheetChange,
-  sheetWith,
-  withoutKeys,
-  withRows,
-  withSkills,
-  withValues,
-} from '@axe/testing/ytsheet-ar2e/ytsheet-ar2e-fixtures';
 import {
   elementOf,
   filledLineOf,
@@ -35,7 +25,10 @@ import {
   sendLine,
   withFixedDice,
   withImportedPiece,
-} from '@axe/testing/ytsheet-ar2e/ytsheet-ar2e-piece';
+} from '@axe/testing/ar2e/ar2e-piece';
+import { SheetChange, withoutKeys, withValues } from '@axe/testing/ar2e/sheet-changes';
+import { TEST_PROVIDERS } from '@axe/testing/test-providers';
+import { baseSheet, sheetWith, withRows, withSkills } from '@axe/testing/ytsheet-ar2e/ytsheet-ar2e-fixtures';
 import GameSystemClass from 'bcdice/lib/game_system';
 
 // パレットの行を送る下準備（`sendLine`）は、送る処理を、アプリの部品の組から取り出して使う
@@ -95,7 +88,7 @@ function withStrength(line: string, strength: number): string {
   return line.replace('(n*5)', `(${strength}*5)`);
 }
 
-describe('取り込みの対象（仕様書「取り込みの対象」）', () => {
+describe('取り込みの対象（仕様書「取り込みの対象」「ゆとシートの取り込みの対象」）', () => {
   it('アリアンロッド2E の PC のシートを見分け、専用の取り込みで読む', () => {
     expect(isYtsheetAr2eCharacter(baseSheet())).toBe(true);
     expect(parseImportedCharacterJson(baseSheet())?.dicebot).toBe('Arianrhod');
@@ -195,7 +188,7 @@ describe('取り込んだコマの欄と欄の設定（仕様書「コマのダ�
   });
 });
 
-describe('パレットの参照（仕様書「ゆとシートの値の扱い」「シートのデータから作る名前」「重なった名前」）', () => {
+describe('パレットの参照（仕様書「シートの値の扱い」「シートのデータから作る名前」「重なった名前」）', () => {
   /**
    * パレットのすべての送れる行で、どの参照も、アックスの参照の処理でコマの中の項目にちょうど 1 つ当たり、
    * 参照を埋めた後に参照が残らないことを確かめる。

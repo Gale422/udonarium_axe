@@ -4,7 +4,7 @@
  * 手と、右手と左手の合計の仕方から、命中判定とダメージの行の組（右手・左手・合計と、その武器）を決める。
  * 行の文字と欄の名前は持たない。
  */
-import { Ar2eHandedness, Ar2eHands } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-character';
+import { Ar2eHandedness, Ar2eHands } from '@axe/domain/character/import/system-profiles/ar2e/ar2e-character';
 
 /** 行の手。右手、左手、合計 */
 export type AttackHand = 'right' | 'left' | 'total';

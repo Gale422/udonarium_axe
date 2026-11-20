@@ -1,5 +1,5 @@
 /**
- * ゆとシートのアリアンロッド2E の取り込みのテストの下準備。
+ * アリアンロッド2E のキャラクターの取り込みのテストの下準備。
  *
  * 本物の処理を呼んで確かめるための部品。取り込みから組み立てまで通してコマを作り、パレットの行を、
  * パレットの画面が送るのと同じ入口で送って、ダイスボットに処理させる。
@@ -20,7 +20,7 @@ import { findReferencedElement } from '@axe/domain/data/element-reference';
 import BCDiceLoader from '@axe/domain/dice/bcdice/bcdice-loader';
 import { DiceBot } from '@axe/domain/dice/dice-bot';
 import { PeerCursor } from '@axe/domain/peer/peer-cursor';
-import { YtsheetSheet } from '@axe/testing/ytsheet-ar2e/ytsheet-ar2e-fixtures';
+import { SheetData } from '@axe/testing/ar2e/sheet-changes';
 import GameSystemClass from 'bcdice/lib/game_system';
 import { vi } from 'vitest';
 
@@ -30,28 +30,28 @@ const DICE_BOT_IDENTIFIER = 'DiceBot';
 const SETTLE_TURNS = 20;
 
 /**
- * ゆとシートのデータを、形式の見分けと組み立てを通して、コマにする。
+ * シートのデータを、形式の見分けと組み立てを通して、コマにする。
  *
- * @param sheet ゆとシートのデータ
+ * @param sheet シートのデータ（JSON を読んだもの）
  * @returns 組み立てたコマ（画像なし）
  * @throws {Error} 形式の見分けで、取り込めるデータと見分けられなかったとき
  */
-export function importAr2ePiece(sheet: YtsheetSheet): GameCharacter {
+export function importAr2ePiece(sheet: SheetData): GameCharacter {
   const imported = parseImportedCharacterJson(sheet);
   if (!imported) throw new Error('取り込めなかった');
   return ImportedCharacterFactory.create(imported, '');
 }
 
 /**
- * ゆとシートのデータからコマを作って渡し、渡した処理が終わったら、コマを片付ける。
+ * シートのデータからコマを作って渡し、渡した処理が終わったら、コマを片付ける。
  * 渡した処理が待つ処理（Promise を返す処理）なら、待ち終わってから片付ける。
  *
- * @param sheet ゆとシートのデータ
+ * @param sheet シートのデータ（JSON を読んだもの）
  * @param use コマを使う処理
  * @returns 渡した処理の戻り値
  * @throws {Error} 形式の見分けで、取り込めるデータと見分けられなかったとき。渡した処理が投げた例外も、そのまま投げる
  */
-export function withImportedPiece<T>(sheet: YtsheetSheet, use: (piece: GameCharacter) => T): T {
+export function withImportedPiece<T>(sheet: SheetData, use: (piece: GameCharacter) => T): T {
   const piece = importAr2ePiece(sheet);
   let result: T;
   try {

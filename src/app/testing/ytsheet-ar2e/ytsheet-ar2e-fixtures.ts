@@ -2,17 +2,12 @@
  * ゆとシートのアリアンロッド2E の取り込みのテストの架空のシート。
  *
  * 架空のシートの土台（`baseSheet`）を、1 か所ずつ変える道具で、書き方の組み合わせや、境目の値を作る。
- * 架空のシートを、読み手でアリアンロッド2E のキャラクターに読む部品（`ar2eCharacterOf`）も置く。
+ * 架空のシートを、ゆとシートの読み手でアリアンロッド2E のキャラクターに読む部品（`ar2eCharacterOf`）も置く。
  */
-import { Ar2eCharacter } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-character';
-import { readAr2eCharacter } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-character-reader';
+import { Ar2eCharacter } from '@axe/domain/character/import/system-profiles/ar2e/ar2e-character';
+import { readYtsheetAr2eCharacter } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ytsheet-ar2e-reader';
 import { YtsheetRecord } from '@axe/domain/character/import/ytsheet-record';
-
-/** ゆとシートのデータ（JSON を読んだもの） */
-export type YtsheetSheet = Record<string, unknown>;
-
-/** 架空のシートを 1 か所変える道具 */
-export type SheetChange = (sheet: YtsheetSheet) => void;
+import { SheetChange, SheetData, sheetFrom, withoutKeys, withValues } from '@axe/testing/ar2e/sheet-changes';
 
 /** 能力値の記号と、基本値・能力値・判定のダイス数・判定の固定値 */
 const ABILITY_VALUES: readonly (readonly [string, number, number, number, number])[] = [
@@ -122,8 +117,8 @@ const BASE_SKILLS: readonly SheetRow[] = [
  *
  * @returns 架空のキャラクターのデータ
  */
-export function baseSheet(): YtsheetSheet {
-  const sheet: YtsheetSheet = {
+export function baseSheet(): SheetData {
+  const sheet: SheetData = {
     name: '架空の冒険者',
     namePlate: '架空の冒険者(テスト)',
     nameColor: '#336699',
@@ -184,43 +179,18 @@ export function baseSheet(): YtsheetSheet {
  * @param changes 変える道具（かける順）
  * @returns 変えたデータ
  */
-export function sheetWith(...changes: SheetChange[]): YtsheetSheet {
-  const sheet = baseSheet();
-  for (const change of changes) change(sheet);
-  return sheet;
+export function sheetWith(...changes: SheetChange[]): SheetData {
+  return sheetFrom(baseSheet(), ...changes);
 }
 
 /**
- * ゆとシートのデータを、読み手で、アリアンロッド2E のキャラクターに読む。
+ * ゆとシートのデータを、ゆとシートの読み手で、アリアンロッド2E のキャラクターに読む。
  *
  * @param sheet ゆとシートのデータ
  * @returns アリアンロッド2E のキャラクター
  */
-export function ar2eCharacterOf(sheet: YtsheetSheet): Ar2eCharacter {
-  return readAr2eCharacter(new YtsheetRecord(sheet));
-}
-
-/**
- * 項目の値を置き換える道具を作る。ない項目は足す。
- *
- * @param values 項目名と値
- * @returns 架空のシートを変える道具
- */
-export function withValues(values: YtsheetSheet): SheetChange {
-  return (sheet) => Object.assign(sheet, values);
-}
-
-/**
- * 項目を消す道具を作る。
- *
- * @param keys 消す項目名
- * @returns 架空のシートを変える道具
- */
-export function withoutKeys(...keys: string[]): SheetChange {
-  return (sheet) => {
-    // ゆとシートは、空の項目を空の値にせず、項目ごと出さないため
-    for (const key of keys) delete sheet[key];
-  };
+export function ar2eCharacterOf(sheet: SheetData): Ar2eCharacter {
+  return readYtsheetAr2eCharacter(new YtsheetRecord(sheet));
 }
 
 /** 番号の付いた行の 1 行（`Name` などの項目名と値） */

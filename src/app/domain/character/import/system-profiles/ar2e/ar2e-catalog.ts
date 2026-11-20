@@ -1,8 +1,8 @@
 /**
  * アリアンロッド2E の一覧。
  *
- * ルールが決めている固定の一覧。能力値、判定、スキルのタイミングと判定の分け方、バッドステータス。
- * キャラクターごとの値と、ゆとシートの項目名は持たない。
+ * ルールが決めている固定の一覧と決まった値。能力値、判定、判定の基本のダイス数、スキルのタイミングと判定の分け方、バッドステータス。
+ * キャラクターごとの値と、サイトの項目名は持たない。
  */
 
 /** 能力値の識別子 */
@@ -36,7 +36,7 @@ export interface Ar2eSpecialCheck {
   readonly kind: 'special';
   /** 判定の名前（例: トラップ探知、魔術判定） */
   readonly name: string;
-  /** ダイス数の元になる能力値。ゆとシートは、この能力値の判定のダイス数に、足すダイス数を足して求める */
+  /** 元になる能力値 */
   readonly ability: Ar2eAbilityId;
 }
 
@@ -71,6 +71,9 @@ export const AR2E_CHECKS: readonly Ar2eCheck[] = [
   ...AR2E_ABILITIES.map((ability): Ar2eAbilityCheck => ({ id: ability.id, kind: 'ability', name: ability.name })),
   ...AR2E_SPECIAL_CHECKS,
 ];
+
+/** 判定の基本のダイス数。判定は、スキルなどで足さなければ 2D6 で振る */
+export const AR2E_BASE_CHECK_DICE = 2;
 
 /**
  * 判定を、識別子で引く。

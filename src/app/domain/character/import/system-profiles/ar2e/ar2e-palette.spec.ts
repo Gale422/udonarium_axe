@@ -1,14 +1,14 @@
 // パレットの案の単体テスト。
 // スキルの置き場と攻撃の組み合わせから書いた、チャットパレットの文を確かめる。
-import { writeAr2ePalette } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-palette';
-import { planAttacks } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/attack-plan';
-import { placeSkills } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/reference-names';
+import { writeAr2ePalette } from '@axe/domain/character/import/system-profiles/ar2e/ar2e-palette';
+import { planAttacks } from '@axe/domain/character/import/system-profiles/ar2e/attack-plan';
+import { placeSkills } from '@axe/domain/character/import/system-profiles/ar2e/reference-names';
 import { paletteCommandGroups } from '@axe/domain/chat/palette-rows';
+import { SheetChange } from '@axe/testing/ar2e/sheet-changes';
 import {
   ar2eCharacterOf,
   DAGGER,
   EMPTY_HAND,
-  SheetChange,
   sheetWith,
   SHIELD,
   SWORD,

@@ -8,7 +8,7 @@ import {
   Ar2eSkillCheck,
   skillCheckOf,
   timingOf,
-} from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-catalog';
+} from '@axe/domain/character/import/system-profiles/ar2e/ar2e-catalog';
 
 /** 仕様書「スキルのタイミングの分け方」の、決まったタイミング（その並び） */
 const SPEC_TIMINGS = [

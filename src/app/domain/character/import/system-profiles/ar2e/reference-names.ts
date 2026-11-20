@@ -11,9 +11,9 @@ import {
   Ar2eAbility,
   Ar2eCheck,
   timingOf,
-} from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-catalog';
-import { Ar2eSkill } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-character';
-import { AttackHand } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/attack-plan';
+} from '@axe/domain/character/import/system-profiles/ar2e/ar2e-catalog';
+import { Ar2eSkill } from '@axe/domain/character/import/system-profiles/ar2e/ar2e-character';
+import { AttackHand } from '@axe/domain/character/import/system-profiles/ar2e/attack-plan';
 
 /**
  * 決まった項目の名前のうち、能力値と判定以外のもの。

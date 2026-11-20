@@ -2,7 +2,7 @@
  * パレットの案。
  *
  * 見出しの並びと行の書き方。スキルの置き場と攻撃の組み合わせから、チャットパレットの文を書く。キャラクターの値は読まない。
- * 欄の見た目と、ゆとシートの項目名は持たない。行は、パレットの変数を使わず、欄を参照する。
+ * 欄の見た目と、サイトの項目名は持たない。行は、パレットの変数を使わず、欄を参照する。
  */
 import {
   AxeBuffEnding,
@@ -25,13 +25,9 @@ import {
   ar2eCheckOf,
   Ar2eRecovery,
   skillCheckOf,
-} from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-catalog';
-import { Ar2eSkill } from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/ar2e-character';
-import {
-  AttackHand,
-  AttackLine,
-  AttackPlan,
-} from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/attack-plan';
+} from '@axe/domain/character/import/system-profiles/ar2e/ar2e-catalog';
+import { Ar2eSkill } from '@axe/domain/character/import/system-profiles/ar2e/ar2e-character';
+import { AttackHand, AttackLine, AttackPlan } from '@axe/domain/character/import/system-profiles/ar2e/attack-plan';
 import {
   AR2E_FIELD_NAMES,
   checkFieldNames,
@@ -40,7 +36,7 @@ import {
   resourceFieldPath,
   SKILL_SECTION_NAME,
   SkillHeading,
-} from '@axe/domain/character/import/system-profiles/ytsheet-ar2e/reference-names';
+} from '@axe/domain/character/import/system-profiles/ar2e/reference-names';
 
 const N = AR2E_FIELD_NAMES;
 
