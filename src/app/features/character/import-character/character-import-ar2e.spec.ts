@@ -3,9 +3,9 @@
  * 入口に貼ったデータとアドレスで、取り込みの動きのテストと同じ流れで作るコマと、同じコマができるかを見る。
  */
 import { TestBed } from '@angular/core/testing';
+import { CharacterImportService } from '@axe/application/character/character-import.service';
 import { GameCharacter } from '@axe/domain/character/game-character';
 import { collectDataElements } from '@axe/domain/data/data-element-tree';
-import { CharacterImportService } from '@axe/features/character/import-character/character-import.service';
 import { importAr2ePiece } from '@axe/testing/ar2e/ar2e-piece';
 import { SheetData } from '@axe/testing/ar2e/sheet-changes';
 import { baseCharasheet } from '@axe/testing/charasheet-ar2e/charasheet-ar2e-fixtures';
